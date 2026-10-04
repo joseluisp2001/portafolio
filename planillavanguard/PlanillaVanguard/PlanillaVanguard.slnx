@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../formularios/formularios.csproj" />
+  <Project Path="../GeneradorLicencias/GeneradorLicencias.csproj" />
+  <Project Path="../Licencias/Licencias.csproj" />
+  <Project Path="../Licencias.Pruebas/Licencias.Pruebas.csproj" />
+</Solution>

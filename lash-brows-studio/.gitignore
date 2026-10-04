@@ -1,0 +1,51 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+# ...menos el ejemplo, que existe justamente para estar en el repo.
+# `.env*` lo estaba tapando: quien clonara el proyecto no recibía la lista de
+# variables que hay que llenar — incluida RESENAS_SAL. Los ocho proyectos
+# nuevos no tienen este problema porque ignoran `.env` y `.env*.local`, que es
+# lo que hay que ignorar de verdad.
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Las resenas de clientas. Son contenido: van al volumen del servidor y se
+# respaldan aparte. Nunca a git.
+/uploads

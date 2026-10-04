@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>icono.ico</ApplicationIcon>
+
+    <!-- x64 queda como plataforma de primera: asi aparece en la lista
+         de Visual Studio y no hay que escribirla a mano. El icono lo
+         toma ApplicationIcon, que vale para cualquier plataforma. -->
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <!-- La marca va dentro del ejecutable: asi el logo y el icono
+       aparecen aunque se copie solo el .exe a otra maquina. -->
+  <ItemGroup>
+    <!-- logo.png sale de icono.jpg pero con los bordes recortados: el
+         JPEG dejaba una linea clara al costado que se notaba sobre la
+         banda azul. -->
+    <EmbeddedResource Include="logo.png" LogicalName="Vanguard.logo.png" />
+    <EmbeddedResource Include="icono.ico" LogicalName="Vanguard.icono.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+
+    <!-- El acceso a SQL Server se pide aqui, de frente. Antes entraba
+         de rebote por el proyecto GestorDatos: el dia que ese proyecto
+         cambiara de version o se quitara, esta carpeta dejaba de
+         compilar sin que se viera por que. -->
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Solo Licencias. GestorDatos y Logica se quitaron a proposito:
+
+         GestorDatos traia una copia vieja de Conexion, Oficial y
+         OficialesRepositorio, con el mismo namespace que los archivos
+         que estan aqui. El compilador sacaba veinte avisos de tipo
+         duplicado y se quedaba con los de aqui, asi que el proyecto de
+         al lado no hacia nada... salvo el dia en que se borrara un
+         archivo de esta carpeta: ahi entraria la version vieja sin que
+         nadie se diera cuenta, con otra cadena de conexion y un modelo
+         al que le faltan campos.
+
+         Logica nunca se uso: era una clase vacia.
+
+         Las dos carpetas ya no existen: se borraron el 24-8-2026, con
+         respaldo en Documents\GIT-carpetas-muertas-2026-08-24.zip. -->
+    <ProjectReference Include="..\Licencias\Licencias.csproj" />
+  </ItemGroup>
+
+</Project>

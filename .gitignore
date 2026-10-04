@@ -7,3 +7,9 @@ out/
 next-env.d.ts
 .DS_Store
 Thumbs.db
+
+# .NET
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user

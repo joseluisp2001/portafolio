@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <!-- Se apoya en el generador porque necesita la clave privada para
+       emitir licencias de prueba. Por eso solo corre en la maquina del
+       proveedor, que es la unica que la tiene. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Licencias\Licencias.csproj" />
+    <ProjectReference Include="..\GeneradorLicencias\GeneradorLicencias.csproj" />
+  </ItemGroup>
+
+</Project>

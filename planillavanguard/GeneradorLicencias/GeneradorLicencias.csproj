@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>AnyCPU;x64</Platforms>
+
+    <!-- Esta aplicacion NO se entrega a los clientes. Es la que guarda la
+         clave privada con la que se firman las licencias. -->
+    <AssemblyName>GeneradorLicencias</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Licencias\Licencias.csproj" />
+  </ItemGroup>
+
+</Project>

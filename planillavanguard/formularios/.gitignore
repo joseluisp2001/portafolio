@@ -1,0 +1,36 @@
+# Compilación
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.pubxml.user
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Paquetes
+*.nupkg
+packages/
+
+# Publicación
+publish/
+*.[Pp]ublish.xml
+
+# Respaldos y bitácora del mantenimiento automático: van a
+# C:\PlanillaVanguard, fuera de la carpeta del programa, pero por si acaso
+Respaldos/
+Registro/
+*.bak
+
+# Varios del sistema
+Thumbs.db
+desktop.ini

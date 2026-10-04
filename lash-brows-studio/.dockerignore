@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env
+.env.local
+infra
+n8n
+Imagenes necesarias para el proyecto
+imagenes
+scripts
+*.md
+.claude
+uploads

@@ -1,0 +1,952 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   SISTEMA DE DISEÑO — AURA STUDIO
+   Todo token vive acá. Ningún componente define colores, sombras ni curvas
+   de animación propias; los consume como clases (bg-cream, text-espresso…).
+   ========================================================================== */
+
+@theme {
+  /* ---- Paleta -----------------------------------------------------------
+     Los siete colores de marca, tal cual el brief. Se agregan dos variantes
+     "ink": el mismo tono oscurecido lo justo para poder cargar texto o un
+     indicador de foco sin romper WCAG AA.
+
+       rose  (#C98B87) queda 2.59:1 sobre cream → sólo relleno decorativo.
+       gold  (#C9A227) queda 2.25:1 sobre cream → sólo como fondo.
+
+     `node scripts/check-contrast.mjs` verifica cada par contra su umbral.
+     Si se toca un color, hay que volver a correrlo.                        */
+  --color-cream: #faf6f2; /* fondo base de la página */
+  --color-sand: #efe4da; /* secciones alternas, bordes suaves */
+  --color-blush: #e8c4c0; /* acento primario, botones secundarios */
+  --color-rose: #c98b87; /* hover del acento, relleno decorativo */
+  --color-rose-ink: #9a524c; /* eyebrows, íconos con significado, foco */
+  --color-espresso: #2e2422; /* texto principal, botones primarios */
+  --color-mocha: #6f5c55; /* texto secundario */
+  --color-gold: #c9a227; /* fondo del badge "Más pedido" */
+  --color-gold-ink: #9a7818; /* estrellas, separadores finos */
+  /* blush al 40 % sobre cream, pero YA COMPUESTO y opaco. Lo usa la fila de hoy
+     del horario. Translúcido, el fondo ambiental lo atravesaba y el contraste de
+     esa fila dependía de dónde estuviera una mancha: con el aura encima, mocha
+     caía a 4.46:1. Opaco se ve igual y siempre da mocha 4.98:1. */
+  --color-blush-plano: #f3e1de;
+
+  /* ---- Tipografía ------------------------------------------------------ */
+  --font-display: var(--font-cormorant), ui-serif, Georgia, "Times New Roman",
+    serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* Escala fluida. El nombre `text-display` evita chocar con el `text-*`
+     de tamaños que ya trae Tailwind.                                        */
+  --text-display: clamp(2.5rem, 7vw, 5rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.02em;
+
+  --text-h2: clamp(2rem, 4.5vw, 3.25rem);
+  --text-h2--line-height: 1.08;
+  --text-h2--letter-spacing: -0.015em;
+
+  /* El h3 titula una categoría entera (un bloque de tarjetas), no una línea
+     suelta: con 1.75rem de tope quedaba a un paso del cuerpo y el bloque se
+     leía plano. Sube a 2.125rem, que a 1280px queda en 34px contra los 52px
+     del h2 —un escalón claro— y sigue sin competir con él.                 */
+  --text-h3: clamp(1.5rem, 2.9vw, 2.125rem);
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.7;
+
+  /* ---- Profundidad ----------------------------------------------------- */
+  --shadow-soft: 0 20px 60px -25px rgb(46 36 34 / 0.35);
+  --shadow-lifted: 0 32px 80px -28px rgb(46 36 34 / 0.45);
+
+  /* ---- Movimiento ------------------------------------------------------ */
+  --ease-aura: cubic-bezier(0.22, 1, 0.36, 1);
+  /* La SEGUNDA curva del sitio, y la unica excepcion a "una sola curva".
+     --ease-aura es un ease-out fuerte: sale disparada y frena. Es lo correcto
+     para un hover de 180 ms, y es lo peor posible para un vaiven de 30 s.
+     Medido sobre la curva: con --ease-aura la mancha se come el 60 % del
+     recorrido en los primeros 5 segundos y despues pasa el 35 % del tiempo por
+     debajo de 1 px/s (el 27 %, por debajo de 0,5). O sea: el fondo esta casi
+     siempre quieto, que es justo de lo que se quejaba quien lo miraba.
+     Con esta (easeInOutSine, de easings.net) el tiempo por debajo de 1 px/s
+     baja al 4 %, la velocidad media es la misma y el pico pasa de 43 a 15 px/s.
+     No compite con ninguna interaccion: nada del sitio se mueve a 30 s. */
+  --ease-vaiven: cubic-bezier(0.37, 0, 0.63, 1);
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-pulse-ring: pulse-ring 3s var(--ease-aura) infinite;
+
+  @keyframes marquee {
+    /* La pista se renderiza dos veces; -50% deja el corte invisible. */
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    70%,
+    100% {
+      transform: scale(1.9);
+      opacity: 0;
+    }
+  }
+}
+
+@layer base {
+  :root {
+    /* Sin modo oscuro: el sitio se ve igual en cualquier dispositivo. */
+    color-scheme: light;
+
+    /* ---- Tiempos de interacción ----------------------------------------
+       Un solo juego de duraciones para hover y foco, para que ninguna sección
+       invente la suya y el sitio responda siempre igual. Se consumen como
+       valor arbitrario de Tailwind, siempre junto a la curva de la casa:
+
+         transition-colors duration-[var(--duration-hover)] ease-aura
+         transition-shadow duration-[var(--duration-lift)]  ease-aura
+
+       Sólo hay una curva a propósito: `--ease-aura` sale rápido y frena
+       suave, que es exactamente lo que pide un hover. Meter una segunda
+       curva "para colores" haría que dos cosas que ocurren al mismo tiempo
+       —el fondo y la sombra de una tarjeta— se movieran distinto.
+
+       Cortas a propósito: pasados ~350ms un hover deja de leerse como
+       respuesta y empieza a leerse como espera. Las entradas por scroll no
+       van acá: esas viven en `DURATION`, en lib/motion.ts.                 */
+    --duration-hover: 180ms;
+    --duration-lift: 260ms;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* El header sticky mide 72px; evita que el ancla quede debajo. */
+    scroll-padding-top: 5.5rem;
+    -webkit-text-size-adjust: 100%;
+    /* La barra de scroll del sistema es gris azulado y es lo único de la
+       ventana que no es de la paleta. Se hereda a cualquier contenedor con
+       scroll interno; el carrusel la esconde aparte con `no-scrollbar`.    */
+    scrollbar-color: color-mix(in oklab, var(--color-mocha) 40%, transparent)
+      transparent;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-espresso);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Evita la línea final huérfana en los párrafos. Se hereda a todo el
+       documento; los títulos lo pisan más abajo con `balance`.              */
+    text-wrap: pretty;
+    /* El flash gris de Android al tocar un botón no es de la paleta. No se
+       elimina —es la única señal táctil que hay antes del :active—, se tiñe
+       de blush.                                                             */
+    -webkit-tap-highlight-color: color-mix(
+      in oklab,
+      var(--color-blush) 45%,
+      transparent
+    );
+    /* `clip` en vez de `hidden`: contiene desbordes laterales sin romper
+       `position: sticky` del header. Es una red de seguridad, no la solución;
+       cada sección se maqueta para no desbordar a 375px.                    */
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    /* `pretty` (heredado del body) sólo arregla la última línea; en un título
+       de dos líneas lo que se nota es el desbalance entre ellas.            */
+    text-wrap: balance;
+  }
+
+  /* Un solo indicador de foco para todo el sitio. rose-ink da 5.30:1 sobre
+     cream y 4.55:1 sobre sand, por encima del 3:1 que pide WCAG 1.4.11.
+     El anillo medible no se toca: sigue siendo 2px sólidos de rose-ink. Lo
+     que se suavizó es cómo llega. Antes aparecía pegado al borde y de golpe;
+     ahora respira 3px y crece desde el borde en 150ms, con un halo blush
+     difuso detrás que apoya el contraste en vez de restarlo.
+     Si el componente trae su propia `shadow-*` o `transition-*`, la utilidad
+     gana y el anillo aparece instantáneo — nunca desaparece.                */
+  :focus-visible {
+    outline: 2px solid var(--color-rose-ink);
+    outline-offset: 3px;
+    border-radius: 4px;
+    box-shadow: 0 0 0 6px
+      color-mix(in oklab, var(--color-blush) 50%, transparent);
+    transition:
+      outline-offset 150ms var(--ease-aura),
+      box-shadow 150ms var(--ease-aura);
+  }
+
+  /* Continuidad entre secciones.
+     Un bloque cream contra uno sand se cortaba a filo, como dos imágenes
+     pegadas. Un filete de 1px que se desvanece en los extremos cose los dos
+     fondos: de cerca casi no se ve, de lejos hace que la página se lea como
+     una sola pieza. Entre secciones del mismo tono no aparece — ahí no hay
+     corte que disimular, y una línea sería un separador, que es otra cosa.
+     `:where()` deja la especificidad en cero: cualquier utilidad de Tailwind
+     que ponga una sección sigue ganando.                                    */
+  :where(
+    [data-tone="cream"] + [data-tone="sand"],
+    [data-tone="sand"] + [data-tone="cream"]
+  )::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    height: 1px;
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--color-espresso) 12%, transparent) 20%,
+      color-mix(in oklab, var(--color-espresso) 12%, transparent) 80%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  ::selection {
+    background-color: var(--color-blush);
+    color: var(--color-espresso);
+  }
+
+  /* El input date de WebKit pinta su ícono casi invisible sobre cream. */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.65;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    /* Corta marquee, pulso y cualquier transición larga. Lo que sobrevive
+       son los fades de 150ms que los componentes aplican por su cuenta.
+       Los retrasos también se anulan: un fade de 150ms que arranca 300ms
+       después no se lee como "menos movimiento", se lee como lentitud. Esto
+       cubre de una vez las duraciones de `--duration-*` y el anillo de foco,
+       que ya nacen por debajo o en ese tope.                                */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.15s !important;
+      transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Utilidades propias
+   ========================================================================== */
+
+/* Carrusel de testimonios: scroll-snap sin barra visible. */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Máscara lateral del marquee, para que el texto no aparezca de golpe. */
+@utility fade-sides {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+
+
+/* ==========================================================================
+   Carga de marca (components/Intro.tsx)
+
+   Línea de tiempo (una sola vez por sesión, ~1,78 s en total):
+     0–800 ms     los dos arcos del aro se trazan desde el hueco de arriba
+     340–800 ms   entra el monograma GR
+     660–1080 ms  entra el nombre
+     780–1200 ms  entra la bajada
+     1200–1420 ms la marca armada, quieta: es el fotograma al que apunta todo
+     1420–1780 ms la capa se va
+
+   Nunca recibe clics: nada puede quedar entre la clienta y el chat.
+
+   Los porcentajes de las máscaras salen de MEDIR public/logo.png, no de
+   tantear: están explicados en components/Intro.tsx. Si cambia el logo,
+   `node scripts/medir-logo.mjs` avisa si dejaron de cuadrar.
+   ========================================================================== */
+
+/* El ángulo del trazo. Se anima como número porque está declarado con
+   @property; sin esto saltaría de golpe a la mitad del recorrido.
+   Arranca en 25deg —el borde del hueco de arriba— para que la tinta se vea
+   desde el primer fotograma y no haya pantalla en blanco. */
+@property --intro-trazo {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 25deg;
+}
+
+.intro {
+  position: fixed;
+  inset: 0;
+  /* El encabezado del sitio es sticky con z-60: la capa tiene que ir arriba. */
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--color-cream);
+  pointer-events: none;
+  /* Velocidad constante, por lo mismo que el trazo: con la curva de la casa
+     un fundido HACIA cero tira el 83 % de la opacidad en 96 ms y deja 224 ms
+     de neblina que nadie ve. Lo que se percibe es un corte, no un velo que se
+     levanta. El desplazamiento de .intro-contenido sí lleva la curva. */
+  animation: intro-salida 360ms linear 1420ms forwards;
+}
+
+.intro-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 1.5rem;
+  /* Se va con la capa: un desplazamiento corto hacia arriba, nada más. */
+  animation: intro-contenido-sale 360ms
+    var(--ease-aura, cubic-bezier(0.22, 1, 0.36, 1)) 1420ms forwards;
+}
+
+/* La caja del logo: las dos copias se apilan exactamente encima. */
+.intro-marca {
+  position: relative;
+  width: clamp(104px, 18vw, 148px);
+  aspect-ratio: 1;
+  /* Animar una máscara es repintar: 48 cuadros en 800 ms, y justo mientras
+     Next hidrata el hero y el carrusel. `contain` encierra ese repintado en
+     esta caja en vez de invalidar la capa entera, que está fija a pantalla
+     completa. Es seguro porque la caja ya tiene tamaño propio. */
+  contain: layout paint style;
+}
+
+.intro-trazo,
+.intro-aro,
+.intro-monograma {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* El aro: la copia recortada de 89 % hacia afuera (sólo el anillo). */
+.intro-aro {
+  mask-image: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 85%,
+    #000 89%
+  );
+}
+
+/* Las letras: la copia recortada de 85 % hacia adentro. */
+.intro-monograma {
+  mask-image: radial-gradient(
+    circle closest-side at 50% 50%,
+    #000 85%,
+    transparent 89%
+  );
+  opacity: 0;
+  animation: intro-monograma 460ms
+    var(--ease-aura, cubic-bezier(0.22, 1, 0.36, 1)) 340ms both;
+}
+
+/* El trazo: una cuña simétrica que se abre desde las 12 hacia los dos lados,
+   así que los dos arcos se dibujan a la vez, cada uno desde su punta de
+   arriba. `from 7deg` es el centro real del hueco del logo, medido.
+   Velocidad constante: con la curva de la casa el 80 % del aro se dibujaba en
+   el primer tercio del tiempo y se leía como un parpadeo, no como un trazo. */
+.intro-trazo {
+  mask-image: conic-gradient(
+    from 7deg,
+    #000 var(--intro-trazo),
+    transparent var(--intro-trazo) calc(360deg - var(--intro-trazo)),
+    #000 calc(360deg - var(--intro-trazo))
+  );
+  animation:
+    intro-trazar 800ms linear both,
+    intro-tinta 220ms var(--ease-aura, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.intro-nombre {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  letter-spacing: -0.01em;
+  color: var(--color-espresso);
+  opacity: 0;
+  animation: intro-texto 420ms var(--ease-aura, cubic-bezier(0.22, 1, 0.36, 1))
+    660ms forwards;
+}
+
+.intro-bajada {
+  margin-top: 0.5rem;
+  /* Mismo tratamiento que la bajada del encabezado, un punto más grande. */
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-mocha);
+  opacity: 0;
+  animation: intro-texto 420ms var(--ease-aura, cubic-bezier(0.22, 1, 0.36, 1))
+    780ms forwards;
+}
+
+/* Sin `from`: el valor de partida lo pone el propio @property (25deg).
+   Así el respaldo sale gratis y no hay que adivinar qué soporta el navegador:
+   donde no hay @property —Safari < 16.4, Firefox < 128— `--intro-trazo` no
+   resuelve, `mask-image` cae a `none` y el aro entra entero con el fundido de
+   `intro-tinta`. Un @supports que preguntara por la máscara cónica no sirve:
+   esos navegadores la soportan, lo que les falta es interpolar el ángulo. */
+@keyframes intro-trazar {
+  to {
+    --intro-trazo: 180deg;
+  }
+}
+
+/* La tinta que asienta: suaviza la aparición de las dos puntas de pluma. */
+@keyframes intro-tinta {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes intro-monograma {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes intro-texto {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes intro-salida {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes intro-contenido-sale {
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+/* La capa es opaca y va en z-100: mientras está arriba, quien navega con
+   teclado no vería dónde está parado el foco (WCAG 2.2, 2.4.11). Adentro de
+   .intro no hay nada enfocable —lleva aria-hidden y sólo tiene div, span, img
+   y p—, así que este selector sólo puede coincidir con la página de verdad:
+   el primer Tab termina la carga. */
+body:has(:focus-visible) .intro {
+  display: none;
+}
+
+/* Ya se vio en esta sesión (INTRO_SCRIPT en app/layout.tsx). */
+html[data-intro="visto"] .intro {
+  display: none;
+}
+
+/* Con movimiento reducido no hay carga: es una espera, y una espera no es una
+   versión más suave de nada. */
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Fondo ambiental (aura) — components/Fondo.tsx
+   ==========================================================================
+   Tres manchas de gradiente y ocho puntos de bokeh detrás de toda la landing.
+   Para que se vean, las secciones de tono cream dejaron de pintar su fondo: son
+   transparentes y el cream lo pone el body. Si este bloque se borra, el sitio
+   queda exactamente como estaba.
+
+   > LAS SECCIONES SAND SIGUEN OPACAS, Y NO ES UN DESCUIDO. rose-ink sobre sand
+   > da 4.55:1, a 0.05 del mínimo de WCAG AA: cualquier tinte encima, aunque sea
+   > de 5 %, tumba el eyebrow de cada sección por debajo de 4,5:1. Así que el
+   > aura vive en el cream —hero, Sobre mí, galería, preguntas— y las secciones
+   > alternas la cortan. De paso el sitio mantiene su ritmo de bloques.
+   >
+   > LOS ALFAS SE MIDEN, NO SE CALCULAN. Peor caso: las tres manchas más un
+   > punto de bokeh en su pico. Medido con el compositor del navegador (pintar
+   > las capas en un canvas y leer el píxel con getImageData):
+   >
+   >   aura sola          #f1e6df   mocha 5.13  gold-ink 3.3   espresso 11.9
+   >   + un bokeh         #eee0d9   mocha 4.88  gold-ink 3.21  espresso 11.71
+   >
+   > EL TECHO LO PONEN LAS ESTRELLAS. Desde el 18-9-2026 los eyebrows del hero y
+   > de cada sección son espresso (11.71:1 acá), no rose-ink: ese cambio liberó
+   > el presupuesto y por eso los alfas pudieron pasar de 10/4/24/6 a 16/7/34/12.
+   > Ahora el que limita es gold-ink —las estrellas de la calificación del hero,
+   > un gráfico con significado, umbral 3:1— que queda en 3.21, y después mocha
+   > en 4.88. Para subir más hay que sacar las estrellas de encima del aura o
+   > oscurecer gold-ink; no hay margen suelto.
+   >
+   > DOS ERRORES QUE YA SE COMETIERON ACÁ, para no repetirlos:
+   >   1. Calcular en vez de medir. Este bloque llegó a decir 4.55:1 con alfas
+   >      12/5/28/8 %; medido, ese apilado daba 4.48:1 y no pasaba AA. Mezclar a
+   >      mano en sRGB da de más: color-mix() convierte a oklab y vuelve.
+   >   2. Apilar en el orden equivocado. La composición alfa no es conmutativa.
+   >      El orden que cuenta es el del DOM en Fondo.tsx: blush, rose, sand y el
+   >      bokeh encima.
+   >
+   > Y LO QUE LO VIGILA: scripts/check-contrast.mjs compone esta pila y exige el
+   > umbral más 0.15 de colchón —el cálculo queda ~0.08 por encima de lo que mide
+   > la pantalla—. Si se sube un alfa, el script falla con exit 1. Los alfas están
+   > duplicados ahí a propósito; si cambian acá, cambian allá.                   */
+
+/* ---------------------------------------------------------------------------
+   EL RECORRIDO (18-9-2026). Cuatro números que components/FondoVivo.tsx escribe
+   en ESTA capa —no en <html>— cuadro a cuadro mientras se hace scroll. Van
+   registrados con @property por dos razones: tipo (para poder usarlos en
+   calc()) y, sobre todo, VALOR POR OMISIÓN. Sin JavaScript, o con movimiento
+   reducido, valen 0 / 1 / 1, y con esos tres valores todas las cuentas de
+   abajo dan exactamente el fondo que había antes del recorrido.
+
+     --desliz   cuánto se corrió el fondo hacia arriba, en píxeles.
+     --avance   0 arriba de todo, 1 al final de la página. Retira el blush: la
+                página termina más clara que como empieza.
+     --medio    1 a mitad de camino, 0 en las dos puntas. Le da el centro del
+                recorrido —galería y reseñas— al rose.
+     --salida   0 mientras se ve el hero, 1 cuando el hero ya salió. Es el
+                cruce entre el aura y la seda.
+
+   > POR QUÉ EXISTE --fuerza, Y POR QUÉ NO SE SUBE (30 %). En el hero la seda
+   > (lib/seda.ts) pone su parte del tinte, así que el aura tiene que bajar lo
+   > mismo que la seda sube. Con el aura al 40 % y el tope de la seda, el peor
+   > píxel del hero da mocha 5.01 y gold-ink 3.29: MEJORES que las 4.92 y 3.24
+   > del resto de la página. Si alguien sube este 0.3, el hero pasa a tener
+   > dos fondos sumados y
+   > las estrellas de la calificación (gold-ink, umbral 3) se caen debajo del
+   > mínimo. scripts/check-contrast.mjs compone las dos puntas del recorrido y
+   > falla con exit 1.                                                        */
+@property --avance {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --medio {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --salida {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+/* Cuánto se corre la capa hacia arriba, en píxeles. No sale de --avance: el
+   porcentaje de página repartía 160 px entre 13 000 px de scroll y no se veía
+   nada. Va atado al scroll REAL (un 8 %) y con tope, así que en la primera
+   pantalla el fondo ya se corrió 60 px mientras el contenido se corrió 800.
+   Esa diferencia es lo único del fondo que se percibe sin buscarlo, y no
+   cuesta un punto de contraste: mover no es teñir. */
+/* Vale 1 sólo cuando la seda del hero ya pintó su primer cuadro (lo escribe
+   lib/seda.ts). Con 0 —sin JavaScript, con movimiento reducido, con saveData,
+   o durante los dos segundos que tarda en llegar el lienzo— las dos cuentas de
+   abajo colapsan al fondo anterior: --fuerza queda en 1 y la seda en 0.
+
+   > SIN ESTO HABÍA UN DESTELLO. El primer cuadro del efecto escribía
+   > --salida: 0 y el aura caía al 30 % al instante, con la seda todavía sin
+   > existir: 9,7 puntos de luminancia de golpe en toda la primera pantalla, y
+   > dos segundos de hero MÁS PÁLIDO que el fondo de siempre. En una revisita
+   > no hay velo de carga que lo tape. */
+@property --seda {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --desliz {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.aura {
+  position: fixed;
+  inset: 0;
+  /* Del 30 % mientras se ve el hero al 100 % cuando el hero salió — pero
+     sólo si la seda existe (--seda). Las dos curvas van acopladas por el mismo
+     factor (1 - --salida) a propósito: medido, si la seda sube mientras el aura
+     sigue en 1, el apilado da gold-ink 3.04 y mocha 4.62, por debajo del umbral
+     con colchón del proyecto. */
+  --fuerza: calc(1 - 0.7 * var(--seda) * (1 - var(--salida)));
+  /* La rampa con la que entra la seda. --ease-vaiven y no --ease-aura: la
+     curva del hover tira el 83 % en los primeros 150 ms y se leería como un
+     corte, que es lo mismo que ya está documentado para la carga de marca. */
+  transition: --seda 600ms var(--ease-vaiven);
+  /* OJO: el viaje NO se hace moviendo esta capa. Con `contain: strict` el
+     recorte de pintado viaja con el transform, así que correr la capa hacia
+     arriba dejaba los últimos --desliz píxeles de la pantalla sin fondo, con
+     una línea horizontal recta donde se cortaba el sand (medido: rect.bottom
+     en 400 con innerHeight 800, y las manchas cruzando esa línea con opacidad
+     0.46/0.78/0.73). Lo que se corre son los hijos, con `translate`, que
+     compone con el `transform` que ya animan las manchas. */
+  /* z-index NEGATIVO, y es lo que hace que esto sea un fondo y no un velo.
+     Con z-index: 0 la capa se pinta en el paso 6 del orden de pintado, o sea
+     ENCIMA de todo el contenido en flujo sin posicionar. Cada bloque de la
+     landing se salvaba por ser relative —Section, Hero, Header, Footer— menos
+     el Marquee, que no lo es: el aura le caía arriba y le teñía la banda sand
+     y sus chispas gold-ink, justo lo que este bloque dice que no puede pasar.
+     Con -1 la capa va al paso 3: encima del fondo del body (que se propaga al
+     canvas y se pinta antes) y debajo de TODO el contenido, sin depender de
+     que cada bloque se acuerde de ponerse relative. */
+  z-index: -1;
+  pointer-events: none;
+  /* Encierra el pintado de las manchas en esta capa en vez de invalidar la
+     página entera en cada cuadro. "contain: strict" ya incluye contención de
+     pintado, que recorta a los hijos: no hace falta "overflow: hidden". */
+  contain: strict;
+}
+
+/* Las duraciones (30, 34 y 38 s) y las amplitudes (18-22vw) no son decorativas:
+   son el umbral para que el movimiento se VEA. Con las primeras —56 a 72 s y
+   7-10vw— cada mancha avanzaba 1,2 px por segundo y el color de un punto
+   cambiaba 4 niveles de 255 en casi un minuto: el fondo estaba ahí, pero nadie
+   percibía que se movía. Medido reproduciendo el gradiente en un canvas en sus
+   dos posiciones extremas. Subir el movimiento no cuesta contraste —el pico
+   apilado es el mismo—, así que es acá y no en los alfas donde se gana. */
+.aura-mancha {
+  position: absolute;
+  border-radius: 50%;
+  /* El viaje (ver --desliz). `translate` y no `transform`: acá el transform ya
+     lo usan los keyframes de la deriva, y las dos propiedades se componen. */
+  translate: 0 calc(var(--desliz) * -1px);
+  /* Sin `filter: blur()`: un gradiente radial que se apaga hacia transparent
+     ya nace difuso y no cuesta un desenfoque de pantalla completa por cuadro
+     en un teléfono de gama baja. */
+  /* Sin "will-change". Una animación de transform ya promueve la capa
+     mientras corre y la suelta al terminar; dejarlo puesto mantiene once
+     capas de composición para siempre —tres de ellas casi de pantalla
+     completa— y también con prefers-reduced-motion, donde no hay nada que
+     animar. */
+  animation-duration: 30s;
+  animation-timing-function: var(--ease-vaiven);
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.aura-mancha--blush {
+  top: -18vh;
+  right: -10vw;
+  width: 78vw;
+  height: 78vw;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in oklab, var(--color-blush) 16%, transparent),
+    transparent 70%
+  );
+  animation-name: aura-deriva-a;
+  /* El blush se retira con el avance: arriba es el color de la bienvenida y
+     abajo, donde están los precios y el formulario, estorba. */
+  opacity: calc(var(--fuerza) * (1 - 0.8 * var(--avance)));
+  /* Los tres delays negativos (-11, -23 y -7 s) no son un detalle: sin ellos
+     las tres manchas arrancan en el mismo cuadro y, aunque sus periodos sean
+     distintos (30, 38 y 34 s), llegan juntas a los extremos las primeras
+     vueltas. Eso se lee como una respiracion sincronizada, que es lo que delata
+     que hay tres capas. Negativos porque un delay positivo dejaria el fondo
+     quieto los primeros segundos, que es cuando mas se mira. */
+  animation-delay: -11s;
+}
+
+.aura-mancha--rose {
+  top: 42vh;
+  left: -22vw;
+  width: 68vw;
+  height: 68vw;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in oklab, var(--color-rose) 7%, transparent),
+    transparent 72%
+  );
+  animation-name: aura-deriva-b;
+  animation-duration: 38s;
+  animation-delay: -23s;
+  /* El rose toma el centro del recorrido y se retira en las dos puntas: es el
+     único de los tres que crece a mitad de camino. */
+  opacity: calc(var(--fuerza) * (0.35 + 0.65 * var(--medio)));
+}
+
+.aura-mancha--sand {
+  bottom: -26vh;
+  left: 26vw;
+  width: 86vw;
+  height: 86vw;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in oklab, var(--color-sand) 34%, transparent),
+    transparent 68%
+  );
+  animation-name: aura-deriva-c;
+  animation-duration: 34s;
+  animation-delay: -7s;
+  /* El sand es el papel del sitio: baja poco, porque es lo que sostiene el
+     tono cálido de punta a punta. */
+  opacity: calc(var(--fuerza) * (1 - 0.4 * var(--avance)));
+}
+
+/* El bokeh entra en la misma cuenta de contraste que las manchas, así que baja
+   con ellas en el hero. Si no, el hero tendría aura al 30 %, seda al 100 % y
+   bokeh al 100 %: justo el pico que el presupuesto no tiene. */
+.aura-bokeh {
+  opacity: var(--fuerza);
+  translate: 0 calc(var(--desliz) * -1px);
+}
+
+/* Bokeh: ocho puntos que suben una pantalla y vuelven. Cada uno lleva su
+   posición, tamaño y tiempo por nth-child, así ninguno acompaña a otro y el
+   conjunto no se lee como una formación. */
+.aura-bokeh span {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in oklab, var(--color-rose) 12%, transparent),
+    transparent
+  );
+  opacity: 0;
+  /* La duración no va acá: los ocho nth-child de abajo fijan la suya (38 a
+     60 s), así que cualquier valor en un atajo quedaría muerto. */
+  animation-name: aura-flota;
+  animation-timing-function: var(--ease-vaiven);
+  animation-iteration-count: infinite;
+}
+
+.aura-bokeh span:nth-child(1) {
+  left: 12%;
+  bottom: -6vh;
+  width: 22px;
+  height: 22px;
+  animation-duration: 17s;
+  --vaiven: 3vw;
+  --deriva: -2vw;
+}
+.aura-bokeh span:nth-child(2) {
+  left: 27%;
+  bottom: -10vh;
+  width: 15px;
+  height: 15px;
+  animation-duration: 21s;
+  animation-delay: -7s;
+  --vaiven: -4vw;
+  --deriva: 2vw;
+}
+.aura-bokeh span:nth-child(3) {
+  left: 41%;
+  bottom: -4vh;
+  width: 30px;
+  height: 30px;
+  animation-duration: 24s;
+  animation-delay: -21s;
+  --vaiven: 2vw;
+  --deriva: 5vw;
+}
+.aura-bokeh span:nth-child(4) {
+  left: 55%;
+  bottom: -12vh;
+  width: 28px;
+  height: 28px;
+  animation-duration: 19s;
+  animation-delay: -13s;
+  --vaiven: -3vw;
+  --deriva: -6vw;
+}
+.aura-bokeh span:nth-child(5) {
+  left: 68%;
+  bottom: -7vh;
+  width: 26px;
+  height: 26px;
+  animation-duration: 22s;
+  animation-delay: -30s;
+  --vaiven: 5vw;
+  --deriva: 1vw;
+}
+.aura-bokeh span:nth-child(6) {
+  left: 79%;
+  bottom: -11vh;
+  width: 16px;
+  height: 16px;
+  animation-duration: 20s;
+  animation-delay: -4s;
+  --vaiven: -2vw;
+  --deriva: -4vw;
+}
+.aura-bokeh span:nth-child(7) {
+  left: 90%;
+  bottom: -5vh;
+  width: 21px;
+  height: 21px;
+  animation-duration: 26s;
+  animation-delay: -35s;
+  --vaiven: 4vw;
+  --deriva: 7vw;
+}
+.aura-bokeh span:nth-child(8) {
+  left: 4%;
+  bottom: -13vh;
+  width: 18px;
+  height: 18px;
+  animation-duration: 28s;
+  animation-delay: -17s;
+  --vaiven: -5vw;
+  --deriva: -3vw;
+}
+
+/* ---------------------------------------------------------------------------
+   LA SEDA DEL HERO — lib/seda.ts, encendida por components/FondoVivo.tsx
+
+   Un lienzo de 200 px de ancho estirado a toda la primera pantalla: cuatro
+   hebras de gradiente que se cruzan despacio y se doblan con la velocidad del
+   scroll.
+   El escalado del navegador es lo que lo vuelve seda, así que acá NO hay
+   filter: blur() —sería un desenfoque de pantalla completa por cuadro.
+
+   El hueco existe siempre en el marcado; el <canvas> adentro sólo si el
+   navegador y la conexión dan. Con --salida en 1 —sin JavaScript, o ya fuera
+   del hero— esta capa vale 0 y no se ve ni se dibuja.                        */
+.aura-seda {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100svh;
+  /* Con --seda en 0 esto es 0: la capa no existe hasta que el lienzo pinta. */
+  opacity: calc(var(--seda) * (1 - var(--salida)));
+}
+
+.aura-seda canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes aura-deriva-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-20vw, 16vh, 0) scale(1.28);
+  }
+}
+
+@keyframes aura-deriva-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.14);
+  }
+  to {
+    transform: translate3d(22vw, -14vh, 0) scale(0.86);
+  }
+}
+
+@keyframes aura-deriva-c {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-18vw, -12vh, 0) scale(1.22);
+  }
+}
+
+/* El punto aparece, sube una pantalla y media y se apaga antes de llegar
+   arriba: nunca se ve nacer ni morir un punto.
+
+   El balanceo del 50 % es lo que lo hace flotar en vez de subir. Antes los ocho
+   compartian una sola deriva lateral (4vw) y subian en paralelo: ocho cosas
+   moviendose igual se leen como una formacion, no como particulas. Ahora cada
+   uno trae su --vaiven (a media subida) y su --deriva (al final) desde su
+   nth-child, con signos alternados, asi que ninguno acompana a otro. */
+@keyframes aura-flota {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(var(--vaiven, 3vw), -62vh, 0);
+  }
+  75% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--deriva, 4vw), -125vh, 0);
+  }
+}
+
+/* Con movimiento reducido el fondo se queda quieto —el bloque global de
+   @layer base ya anula toda animación— y el bokeh, que nace en opacidad 0, se
+   apaga del todo: ocho puntos detenidos a media pantalla no son un fondo, son
+   suciedad. Lo que sobrevive es el mesh como degradado estático.             */
+@media (prefers-reduced-motion: reduce) {
+  .aura-bokeh {
+    display: none;
+  }
+
+  /* FondoVivo ni siquiera la enciende; esto es el cinturón por si alguien
+     monta el lienzo desde otro lado. Un fondo que responde al scroll sigue
+     siendo movimiento. */
+  .aura-seda {
+    display: none;
+  }
+}
+
+/* Al imprimir, una capa fija de pantalla completa se pintaría en cada hoja y
+   gastaría tinta rosa en algo decorativo. Y en alto contraste de Windows el
+   sistema fuerza sus propios colores: un fondo teñido ahí sólo puede estorbar. */
+@media print, (forced-colors: active) {
+  .aura {
+    display: none;
+  }
+}

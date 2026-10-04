@@ -1,0 +1,774 @@
+@import 'tailwindcss';
+
+/* ─── Design tokens ─── */
+@theme {
+  /* Colors */
+  --color-dark: #0F172A;
+  --color-dark-light: #1E293B;
+  --color-light: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-accent: #06B6D4;
+  --color-accent-hover: #0891B2;
+  --color-accent-ink: #0E7490;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-inverse: #F8FAFC;
+  --color-success: #10B981;
+  --color-border: #E2E8F0;
+  --color-border-dark: #334155;
+
+  /* Shadows */
+  --shadow-soft: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-lifted: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.15);
+
+  /* Easing */
+  --ease-tech: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Durations */
+  --duration-hover: 180ms;
+  --duration-lift: 260ms;
+
+  /* Animations */
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-pulse-ring: pulse-ring 3s ease-out infinite;
+
+  /* Fonts */
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+
+  /* Fluid Type Scale */
+  --text-display: clamp(2.5rem, 5vw + 1rem, 4.5rem);
+  --text-h2: clamp(1.75rem, 3vw + 0.5rem, 2.75rem);
+  --text-h3: clamp(1.25rem, 2vw + 0.5rem, 1.75rem);
+  --text-body: clamp(0.95rem, 1vw + 0.5rem, 1.125rem);
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ─── Base ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-light);
+}
+
+/* ─── Focus ─── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* En las secciones claras el cian da 2,3:1 (WCAG 1.4.11 pide 3:1): tono de tinta, 5,1:1. */
+[data-tone='light'] :focus-visible,
+[data-tone='white'] :focus-visible {
+  outline-color: var(--color-accent-ink);
+}
+
+/* ─── Sections: tone alternation ─── */
+[data-tone='dark'] {
+  background: var(--color-dark);
+  color: var(--color-text-inverse);
+}
+
+[data-tone='light'] {
+  background: var(--color-light);
+}
+
+[data-tone='white'] {
+  background: var(--color-card);
+}
+
+/* Seam between sections of different tones */
+[data-tone='dark'] + [data-tone='light'],
+[data-tone='light'] + [data-tone='dark'],
+[data-tone='white'] + [data-tone='light'],
+[data-tone='light'] + [data-tone='white'] {
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Carga inicial: circuito (components/Intro.tsx) ───
+   Todo en CSS para que corra mientras carga JS. Línea de tiempo:
+   0–700 ms se dibujan las pistas y la carcasa · 520–1000 ms un pulso cian
+   recorre cada pista hasta el conector · 940–1160 ms se encienden los pines,
+   justo cuando llega el pulso · 1140–1840 ms el pin activo manda tres ondas ·
+   1420–1680 ms la capa se va (con un leve acercamiento). El hero espera a que se vaya (components/Hero.tsx).
+   Nunca recibe clics. */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  /* Placa: grilla de puntos muy tenue sobre el fondo del sitio. */
+  background:
+    radial-gradient(rgba(148, 163, 184, 0.09) 1px, transparent 1.3px) 0 0 / 22px 22px,
+    var(--color-dark);
+  pointer-events: none;
+  animation: intro-salida 260ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) 1420ms forwards;
+}
+
+/* Resplandor cian detrás del conector: se prende con los pines. */
+.intro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.14), transparent 38%);
+  opacity: 0;
+  animation: intro-aparece 520ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) 900ms forwards;
+}
+
+/* Al irse, el contenido se acerca apenas: se siente como entrar. */
+.intro-contenido {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  animation: intro-acerca 260ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) 1420ms forwards;
+}
+
+.intro-circuito {
+  width: clamp(240px, 42vw, 420px);
+  overflow: visible;
+}
+
+/* Pistas: se dibujan de la vía hacia el conector. */
+.intro-pista {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: intro-trazo 520ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+.intro-via {
+  opacity: 0;
+  animation: intro-aparece 160ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+/* La vía se enciende cuando sale su pulso y queda tibia. */
+.intro-via-luz {
+  opacity: 0;
+  animation: intro-via-luz 520ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation-delay: calc(520ms + var(--i) * 40ms);
+}
+
+.intro-chip {
+  opacity: 0;
+  animation: intro-aparece 200ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) 240ms forwards;
+}
+
+/* El nombre entra cuando el conector ya está encendido. */
+.intro-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: intro-marca 320ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) 1000ms forwards;
+}
+
+.intro-marca-nombre {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+  letter-spacing: -0.01em;
+  color: var(--color-light);
+}
+
+.intro-marca-tech {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #22D3EE;
+}
+
+.intro-marca-linea {
+  width: 2.5rem;
+  height: 1px;
+  background: #475569;
+}
+
+/* Pulso: un tramo corto de cian que viaja por la pista. */
+.intro-pulso {
+  stroke-dasharray: 0.14 2;
+  stroke-dashoffset: 0.14;
+  opacity: 0;
+  animation: intro-pulso 480ms cubic-bezier(0.77, 0, 0.175, 1) forwards;
+  animation-delay: calc(520ms + var(--i) * 40ms);
+}
+
+.intro-carcasa {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: intro-trazo 520ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) 180ms forwards;
+}
+
+.intro-pin {
+  opacity: 0;
+  transform: scale(0.9);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: intro-pin 180ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation-delay: calc(940ms + var(--i) * 40ms);
+}
+
+/* Las ondas nacen del pin activo (19.5, 13.5 en la grilla de 32). */
+.intro-onda,
+.logo-onda {
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 19.5px 13.5px;
+}
+
+/* Tres ondas, de la chica a la grande, como en el encabezado. */
+.intro-onda {
+  animation: senal 520ms var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation-delay: calc(1140ms + var(--i) * 90ms);
+}
+
+@keyframes intro-salida {
+  to { opacity: 0; visibility: hidden; }
+}
+
+@keyframes intro-acerca {
+  to { transform: scale(1.04); }
+}
+
+@keyframes intro-via-luz {
+  0% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+@keyframes intro-marca {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes intro-trazo {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes intro-aparece {
+  to { opacity: 1; }
+}
+
+@keyframes intro-pulso {
+  0% { opacity: 1; stroke-dashoffset: 0.14; }
+  90% { opacity: 1; }
+  100% { opacity: 0; stroke-dashoffset: -1; }
+}
+
+@keyframes intro-pin {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Ya se vio en esta sesión (INTRO_SCRIPT en app/layout.tsx). */
+html[data-intro='visto'] .intro {
+  display: none;
+}
+
+/* ─── Señal WiFi del logo en el encabezado (Logo conSenal) ───
+   Dos pulsos al cargar, de la onda chica a la grande, y uno más al pasar el
+   mouse o con el foco del teclado. Sin bucle infinito: una señal que no para
+   distrae del contenido. */
+.logo-senal .logo-onda {
+  animation: senal 1.4s var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) calc(1.7s + var(--i) * 120ms) 2 both;
+}
+
+/* Sin entrada de marca no hay que esperarla. */
+html[data-intro='visto'] .logo-senal .logo-onda {
+  animation-delay: calc(0.4s + var(--i) * 120ms);
+}
+
+/* Otro nombre de keyframes para que el pulso vuelva a empezar al pasar el mouse. */
+.logo-enlace:focus-visible .logo-senal .logo-onda {
+  animation: senal-otra 1.4s var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) calc(var(--i) * 120ms) 1 both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .logo-enlace:hover .logo-senal .logo-onda {
+    animation: senal-otra 1.4s var(--ease-tech, cubic-bezier(0.22, 1, 0.36, 1)) calc(var(--i) * 120ms) 1 both;
+  }
+}
+
+@keyframes senal {
+  0% { opacity: 0; transform: scale(0.92); }
+  30% { opacity: 1; }
+  70%, 100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes senal-otra {
+  0% { opacity: 0; transform: scale(0.92); }
+  30% { opacity: 1; }
+  70%, 100% { opacity: 0; transform: scale(1); }
+}
+
+/* Movimiento reducido: sin entrada y sin ondas. El logo queda quieto. */
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none; }
+  .logo-onda { animation: none !important; opacity: 0; }
+}
+
+/* ─── Custom utilities ─── */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+@utility fade-sides {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+/* ---------- Texto: títulos, rótulos y entradas (SectionHeading, AnimarAlVer) ---------- */
+/* Títulos: Space Grotesk semibold, apretados (1,08) y con tracking negativo;
+   antes iban en 500 con el interlineado del cuerpo (1,5) y se veían planos. */
+.titulo-seccion {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw + 0.75rem, 3.25rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.titulo-grupo {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.texto-intro {
+  text-wrap: pretty;
+}
+
+/* Rótulo: el pin con señal del logo y su pista, antes del nombre de la sección. */
+.rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.rotulo-pin {
+  position: relative;
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 9999px;
+}
+.rotulo-pin::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background: var(--color-accent);
+}
+.rotulo-pista {
+  flex: none;
+  width: 22px;
+  height: 1.5px;
+  background: currentColor;
+  opacity: 0.45;
+  transform-origin: left center;
+}
+
+/* Frase destacada: tinta del acento y una pista que la subraya y termina en una
+   vía. Con box-decoration-break el subrayado sigue a la frase si parte de línea. */
+.destacado {
+  color: var(--color-accent-ink);
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-repeat: no-repeat;
+  background-position: 0 94%;
+  background-size: 100% 0.09em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* La vía cuelga de la pista, pegada a su final: a la altura del texto se leía
+   como una "o" más ("soluciones.o"). */
+.destacado-via {
+  display: inline-block;
+  width: 0.24em;
+  height: 0.24em;
+  margin-left: -0.02em;
+  vertical-align: -0.3em;
+  border: 0.06em solid var(--color-accent);
+  border-radius: 9999px;
+  background: var(--color-light);
+}
+/* Nombre de grupo como etiqueta de red: el nombre y una pista que sale hacia la derecha. */
+.traza-grupo {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 14rem;
+  height: 1.5px;
+  background: var(--color-accent-ink);
+  opacity: 0.35;
+  transform-origin: left center;
+}
+.traza-grupo::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -3.25px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--color-accent-ink);
+  border-radius: 9999px;
+  background: var(--color-light);
+}
+
+/* Palabras del título: cada una sube dentro de su propia máscara. */
+.palabra {
+  display: inline-block;
+  clip-path: inset(-0.3em -0.15em -0.28em -0.15em);
+}
+.palabra > span {
+  display: inline-block;
+}
+
+/* Entradas. El estado oculto solo existe si AnimarAlVer corrió (html[data-entradas]):
+   sin JavaScript, con movimiento reducido o si el paquete no llega, todo se ve.
+   Lo que ya estaba a la vista al cargar lleva data-visto="ya" y no se anima. */
+html[data-entradas] [data-animar]:not([data-visto]) .anim-palabra {
+  transform: translateY(105%);
+  opacity: 0;
+}
+html[data-entradas] [data-animar]:not([data-visto]) .anim-sube {
+  transform: translateY(14px);
+  opacity: 0;
+}
+html[data-entradas] [data-animar]:not([data-visto]) .anim-pin {
+  transform: scale(0.5);
+  opacity: 0;
+}
+html[data-entradas] [data-animar]:not([data-visto]) .anim-pista {
+  transform: scaleX(0);
+}
+html[data-entradas] [data-animar]:not([data-visto]) .destacado {
+  background-size: 0% 0.09em;
+}
+html[data-entradas] [data-animar]:not([data-visto]) .destacado-via {
+  transform: scale(0.5);
+  opacity: 0;
+}
+/* --d: retardo del grupo; --i: orden dentro del grupo (40-45 ms entre uno y otro). */
+[data-visto='entra'] .anim-palabra {
+  transition:
+    transform 640ms var(--ease-tech) calc(var(--d, 160ms) + var(--i, 0) * 45ms),
+    opacity 420ms var(--ease-tech) calc(var(--d, 160ms) + var(--i, 0) * 45ms);
+}
+[data-visto='entra'] .anim-sube {
+  transition:
+    transform 560ms var(--ease-tech) calc(var(--d, 360ms) + var(--i, 0) * 60ms),
+    opacity 480ms var(--ease-tech) calc(var(--d, 360ms) + var(--i, 0) * 60ms);
+}
+[data-visto='entra'] .anim-pin {
+  transition:
+    transform 320ms var(--ease-tech),
+    opacity 240ms var(--ease-tech);
+}
+[data-visto='entra'] .anim-pista {
+  transition: transform 420ms cubic-bezier(0.77, 0, 0.175, 1) 80ms;
+}
+/* El subrayado se traza después de las palabras, como una señal que llega a la vía. */
+[data-visto='entra'] .destacado {
+  transition: background-size 560ms cubic-bezier(0.77, 0, 0.175, 1) var(--d-destacado, 620ms);
+}
+[data-visto='entra'] .destacado-via {
+  transition:
+    transform 260ms var(--ease-tech) calc(var(--d-destacado, 620ms) + 520ms),
+    opacity 200ms var(--ease-tech) calc(var(--d-destacado, 620ms) + 520ms);
+}
+
+/* Cómo funciona: la señal recorre la pista y enciende cada paso al llegar
+   (--llega, en components/HowItWorks.tsx). Encendido es el estado final: sin JS
+   o con movimiento reducido, los tres pasos se ven encendidos y quietos. */
+.pasos-senal {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  transform-origin: left center;
+}
+.paso-circulo {
+  box-shadow:
+    0 0 0 6px rgb(6 182 212 / 0.14),
+    0 10px 30px -12px rgb(14 116 144 / 0.35);
+}
+html[data-entradas] [data-animar]:not([data-visto]) .anim-enciende {
+  box-shadow: 0 4px 20px -2px rgb(15 23 42 / 0.06);
+}
+html[data-entradas] [data-animar]:not([data-visto]) .anim-enciende .paso-icono {
+  color: #94a3b8;
+}
+[data-visto='entra'] .pasos-senal {
+  transition: transform 1400ms cubic-bezier(0.77, 0, 0.175, 1) 300ms;
+}
+[data-visto='entra'] .anim-enciende {
+  transition: box-shadow 420ms var(--ease-tech) var(--llega, 0ms);
+}
+[data-visto='entra'] .anim-enciende .paso-icono {
+  transition: color 320ms var(--ease-tech) var(--llega, 0ms);
+}
+[data-visto='entra'] .paso-numero {
+  transition:
+    transform 320ms var(--ease-tech) var(--llega, 0ms),
+    opacity 240ms var(--ease-tech) var(--llega, 0ms);
+}
+
+/* ---------- Placa madre de fondo (lib/placa.ts, app/placa-*.svg) ---------- */
+/* Solo en la portada (<main data-placa>). La placa es el fondo del <main>: las
+   secciones claras quedan transparentes y las blancas con un velo, así sigue la
+   alternancia. El hero y la marquesina la tapan con su propio fondo. El pie lleva
+   la versión oscura. Se ve igual sin JavaScript, en el teléfono y con movimiento
+   reducido; las señales (lib/senales.ts) son aparte y solo en escritorio. */
+main[data-placa] {
+  background-color: var(--color-light);
+  background-image: url('/placa-clara.svg');
+  background-size: 1600px 2400px;
+}
+main[data-placa] [data-tone] {
+  --color-fondo-texto: var(--color-light);
+}
+main[data-placa] [data-tone='light'] {
+  background: transparent;
+}
+main[data-placa] [data-tone='white'] {
+  background: color-mix(in srgb, var(--color-card) 55%, transparent);
+  --color-fondo-texto: color-mix(in srgb, var(--color-card) 55%, var(--color-light));
+}
+main[data-placa] ~ footer {
+  background-image: url('/placa-oscura.svg');
+  background-size: 1600px 2400px;
+  --color-fondo-texto: var(--color-dark);
+}
+/* Zona libre: detrás de cada texto sobre el fondo de una sección, el fondo liso
+   con un borde suave. La placa, las señales y el anillo pasan por detrás y el
+   texto no pierde contraste, con o sin JavaScript. La del hero ("tenue") es solo
+   del anillo: ahí no hay placa. */
+main[data-placa] [data-zona-calma]:not([data-zona-calma='tenue']),
+main[data-placa] ~ footer [data-zona-calma] {
+  background-color: var(--color-fondo-texto);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 10px var(--color-fondo-texto),
+    0 0 26px 18px var(--color-fondo-texto);
+}
+
+/* ---------- Anillo de partículas (components/FondoAnillo.tsx) ---------- */
+/* En escritorio con movimiento el lienzo sale del hero y queda fijo detrás de
+   toda la portada. Va en z-0 y en el hero: se pinta encima del fondo de las
+   secciones y debajo de su contenido, que es `relative` y viene después en el
+   árbol (Section.tsx, Marquee, Footer). Sin z-index en el contenido: no se crean
+   contextos de apilamiento y la galería ampliada sigue encima del encabezado. */
+.fondo-anillo--pagina {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* La entrada la hace el propio lienzo. Con movimiento reducido no hay entrada:
+   el cuadro fijo aparece con un fundido corto de opacidad. */
+@media (prefers-reduced-motion: reduce) {
+  .fondo-anillo {
+    opacity: 0;
+    transition: opacity 300ms var(--ease-tech);
+  }
+  .fondo-anillo[data-listo] {
+    opacity: 1;
+  }
+}
+
+/* ---------- Escenas de mantenimiento (components/escenas, EscenaServicio.tsx) ---------- */
+/* Los elementos animados giran y escalan sobre su propio centro. */
+.escena [data-p] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* "Ver otra vez" aparece con un fundido corto y se hunde al pulsarlo. */
+.escena-repetir {
+  transition:
+    opacity 200ms var(--ease-tech),
+    transform 160ms var(--ease-tech),
+    background-color 200ms ease,
+    color 200ms ease;
+}
+.escena-repetir:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .escena-repetir:hover {
+    background-color: rgb(30 41 59 / 0.9);
+    color: #f8fafc;
+  }
+}
+@starting-style {
+  .escena-repetir {
+    opacity: 0;
+  }
+}
+/* Al pasar el mouse por la tarjeta, solo un pulso por una pista. El hover pasa
+   decenas de veces: no repite la escena. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tarjeta-servicio:hover .escena-pulso-hover {
+    animation: escena-pulso 700ms cubic-bezier(0.77, 0, 0.175, 1);
+  }
+}
+@keyframes escena-pulso {
+  from {
+    stroke-dashoffset: 14;
+  }
+  to {
+    stroke-dashoffset: -104;
+  }
+}
+
+/* ---------- Carrusel de servicios (components/CarruselServicios.tsx) ---------- */
+.carrusel-pista {
+  /* Ancho fijo de tarjeta; el relleno (en % del ancho de la pista) centra la
+     primera y la última. Con basis en % se medía sobre lo que deja el relleno.
+     100vw - 4rem: bajo 356 px la pista (100vw menos dos rellenos de 1rem) es más
+     angosta que 82vw y la tarjeta salía recortada. */
+  --ancho: min(26rem, 82vw, 100vw - 4rem);
+  padding-inline: calc((100% - var(--ancho)) / 2);
+  scrollbar-width: none;
+}
+.carrusel-diapo {
+  flex: 0 0 var(--ancho);
+}
+.carrusel-pista::-webkit-scrollbar {
+  display: none;
+}
+/* Las vecinas asoman más chicas y tenues; la activa se asienta al centro. */
+.carrusel-diapo {
+  transition: transform 400ms var(--ease-tech);
+}
+.carrusel-diapo:not([data-activa]) {
+  transform: scale(0.92);
+}
+/* Las vecinas se atenúan con una capa del color de la sección, no con opacity:
+   así siguen opacas y la placa del fondo no se ve a través de su texto. */
+.carrusel-diapo .tarjeta-servicio::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: var(--color-fondo-texto, var(--color-light));
+  opacity: 0;
+  transition: opacity 400ms var(--ease-tech);
+}
+.carrusel-diapo:not([data-activa]) .tarjeta-servicio::after {
+  opacity: 0.45;
+}
+.carrusel-boton {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0; /* si no, en el teléfono se aplastaban a óvalos de 28 px */
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text-primary);
+  transition:
+    transform 160ms var(--ease-tech),
+    background-color 200ms ease,
+    opacity 200ms ease;
+}
+.carrusel-boton:active:not([aria-disabled='true']) {
+  transform: scale(0.97);
+}
+.carrusel-boton[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+/* Tres botones de 44 más cinco puntos no caben en 311 px: en el teléfono, sin flechas. */
+@media (width < 40rem) {
+  .carrusel-flecha {
+    display: none;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .carrusel-boton:hover:not([aria-disabled='true']) {
+    background: var(--color-light);
+  }
+}
+/* Puntos: 44 px de área; la marca crece a píldora en la activa y muestra el avance. */
+.carrusel-punto {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 44px;
+}
+.carrusel-punto-marca {
+  position: relative;
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--color-text-secondary);
+  overflow: hidden;
+  transition:
+    width 300ms var(--ease-tech),
+    background-color 300ms ease;
+}
+.carrusel-punto-marca[data-activa] {
+  width: 28px;
+  background: var(--color-accent-ink);
+}
+.carrusel-progreso {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  transform-origin: left;
+  animation: carrusel-progreso 5000ms linear forwards;
+}
+.carrusel[data-detenido] .carrusel-progreso {
+  animation-play-state: paused;
+}
+@keyframes carrusel-progreso {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carrusel-diapo,
+  .carrusel-diapo .tarjeta-servicio::after,
+  .carrusel-punto-marca {
+    transition: none;
+  }
+}
