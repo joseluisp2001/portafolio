@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/*
+  Estetica: CLINICO LEGIBLE.
+
+  LA ACCESIBILIDAD ES LA ESTETICA. No es una capa que se agrega al final: es lo
+  que decide el tamano de letra, el contraste, el largo de linea y el tamano de
+  cada boton.
+
+  En los otros siete proyectos se decidio NO perseguir AAA, porque obligaria a
+  oscurecer los acentos hasta perder la identidad. Aca es al reves: AAA ES la
+  identidad. Una parte de quienes entran no ve bien, y son exactamente los
+  clientes.
+*/
+
+@theme {
+  /* --- Color: TODO pasa AAA (7:1), no AA -------------------------------- */
+  --color-blanco: #ffffff;
+  --color-nieve: #f4f7f7;
+  --color-tinta: #152220; /* 17,2:1 */
+  --color-gris: #4a5754; /*  7,6:1  ← el gris tambien pasa AAA */
+  --color-verde: #0f5d52; /*  7,9:1 */
+  --color-urgente: #8a2a1e; /*  8,3:1 */
+  --color-borde: #c9d4d2;
+
+  /* --- Tipografia --- */
+  --font-cuerpo: var(--fuente-cuerpo), system-ui, sans-serif;
+
+  --text-h1: clamp(2rem, 5vw, 2.75rem);
+  --text-h2: 1.5rem;
+  --text-h3: 1.1875rem;
+  --text-base: 1.1875rem; /* 19 px MINIMO, en todo el sitio */
+  --text-chico: 1.0625rem; /* lo mas chico que existe aca: 17 px */
+
+  /* --- Forma --- */
+  --radius-base: 8px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-blanco);
+  color: var(--color-tinta);
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+/* Lineas de maximo 60 caracteres: mas largo y el ojo pierde el renglon al
+   volver, que es el problema numero uno al leer con vista cansada. */
+.medida {
+  max-width: 60ch;
+}
+
+/*
+  Bordes de 2 px, no de 1.
+
+  Un borde de 1 px desaparece en una pantalla con brillo alto o vista cansada, y
+  entonces las tarjetas dejan de leerse como bloques separados. Es la diferencia
+  entre ver seis servicios y ver un muro de texto.
+*/
+.tarjeta {
+  border: 2px solid var(--color-borde);
+  border-radius: var(--radius-base);
+  background: var(--color-blanco);
+}
+
+/*
+  AREA TACTIL DE 48x48 EN TODO, no solo donde molesta.
+
+  El minimo de Apple es 44 y el de Android 48. Se toma el mayor: quien usa este
+  sitio puede tener pulso tembloroso, y fallarle a un boton en un sitio de salud
+  es peor que en cualquier otro.
+*/
+.toque {
+  min-height: 48px;
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+  Para enlaces de TEXTO que igual tienen que ser tocables.
+
+  Sin esto, el titulo de un servicio dentro de su tarjeta medía 24 px de alto —
+  la mitad del minimo— y encima de forma inconsistente: los titulos largos
+  envolvian a dos lineas y llegaban a 48, los cortos no. O sea que "Curacion de
+  herida" era mas dificil de tocar que "Control de presion y signos vitales",
+  sin ninguna razon.
+
+  Lo destape midiendo los tocables a 320 px de ancho, no leyendo el codigo.
+*/
+.toque-texto {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+.boton {
+  min-height: 56px;
+  border-radius: var(--radius-base);
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  transition: background-color 200ms, color 200ms;
+}
+
+/* Foco grueso y separado: tiene que verse sin buscarlo. */
+:focus-visible {
+  outline: 3px solid var(--color-verde);
+  outline-offset: 3px;
+}
+
+/* Los precios y las duraciones en columna, que es lo que se compara. */
+.numero {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+  Al 200% de zoom el sitio tiene que seguir funcionando SIN scroll horizontal.
+  Es un requisito de WCAG (1.4.10) y acá es de los que mas se van a usar de
+  verdad: mucha gente mayor navega con el zoom del sistema subido.
+*/
+@media (max-width: 480px) {
+  :root {
+    --text-h1: 1.875rem;
+  }
+}

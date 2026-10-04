@@ -1,0 +1,27 @@
+# dependencias
+/node_modules
+/.pnp
+.pnp.js
+
+# next
+/.next/
+/out/
+/build
+
+# entorno — NUNCA se sube
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# varios
+.DS_Store
+Thumbs.db
+*.pem
+npm-debug.log*
+
+# Los estampados cargados. Es contenido, no codigo: va al volumen del
+# servidor y se respalda aparte. Nunca a git.
+/uploads

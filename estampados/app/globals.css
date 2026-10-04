@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/*
+  Estetica: MUESTRARIO.
+
+  La idea que la define: EL SITIO NO TIENE COLOR PROPIO.
+
+  Es un panel para mirar estampados, y cualquier color de la interfaz compite
+  con la tela. Todo lo que se ve aca es papel, tinta y gris; el unico color en
+  pantalla es el que trae la imagen. Es lo contrario de las otras cuatro
+  esteticas, que se definen justamente por su paleta.
+
+  De ahi salen las demas decisiones: los recuadros se tocan sin separacion, no
+  hay tarjetas ni sombras, y la tipografia es chica y se corre para atras.
+*/
+
+@theme {
+  /* Contrastes: tinta/papel 16,1:1 · gris/papel 5,4:1 */
+  --color-papel: #fafaf8;
+  --color-tinta: #16161a;
+  --color-gris: #6e6e76;
+  --color-linea: #e2e2df;
+  --color-error: #b3261e; /* 5,6:1. El unico color del sistema, y solo falla */
+
+  --font-cuerpo: var(--fuente-cuerpo), system-ui, -apple-system, sans-serif;
+
+  --text-h1: 1.5rem;
+  --text-base: 0.875rem;
+  --text-campo: 1rem; /* 16 px o Safari en iPhone hace zoom al enfocar */
+
+  --radius-base: 0px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Etiquetas pequenas y espaciadas: se leen como rotulos de muestrario, no como
+   titulos de pagina. */
+.rotulo {
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-gris);
+}
+
+input,
+select,
+textarea {
+  font-size: var(--text-campo);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-tinta);
+  outline-offset: 2px;
+}
+
+/*
+  La rejilla de muestras: los recuadros SE TOCAN.
+
+  Sin separacion y sin borde redondeado, la pantalla se lee como un muestrario
+  de tela real y no como una galeria de fotos. Es tambien lo que deja ver de un
+  vistazo si dos estampados pelean entre si.
+*/
+.muestrario {
+  display: grid;
+  gap: 1px;
+  background: var(--color-linea);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/*
+  Estetica: EDITORIAL CALIDO.
+  Una revista de comida, no un menu digital. Papel crema, serif grande, foto que
+  manda, cero sombras. El diseno completo y los contrastes verificados estan en
+  la nota de Obsidian "Soda — editorial calido".
+*/
+
+@theme {
+  /* --- Color -------------------------------------------------------------
+     Contrastes medidos con la formula de WCAG, no a ojo:
+       tinta / papel .............. 15,9:1
+       tinta-suave / papel ......... 6,8:1
+       tomate / papel .............. 4,8:1   (justo, pasa)
+       tomate / papel-hondo ........ 4,4:1   NO PASA -> por eso existe tomate-hondo
+       tomate-hondo / papel-hondo .. 5,2:1
+     Los dos cremas se parecen tanto que el error no se ve a ojo. */
+  --color-papel: #faf6ef;
+  --color-papel-hondo: #f2ebdf;
+  --color-tinta: #1f1b16;
+  --color-tinta-suave: #5c554b;
+  --color-tomate: #c1402b;
+  --color-tomate-hondo: #b03724;
+  --color-oliva: #5a6b4a;
+  --color-mostaza: #e0a32e;
+  --color-linea: rgb(31 27 22 / 0.12);
+  /* Los puntos que llevan el ojo del plato al precio. No son decoracion: son lo
+     que hace que una carta se lea de un vistazo, y al 12% no se ven. */
+  --color-guia: rgb(31 27 22 / 0.3);
+
+  /* --- Tipografia --- */
+  --font-display: var(--fuente-display), Georgia, "Times New Roman", serif;
+  --font-cuerpo: var(--fuente-cuerpo), system-ui, -apple-system, sans-serif;
+
+  --text-h1: clamp(2.5rem, 6vw, 4.5rem);
+  --text-h2: clamp(1.75rem, 3.5vw, 2.5rem);
+  --text-h3: 1.375rem;
+  --text-base: 1.0625rem;
+  --text-pie: 0.875rem;
+
+  /* --- Forma --- */
+  --radius-base: 2px;
+
+  /* --- Movimiento --- */
+  --ease-suave: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* El crema ES la identidad. Sin esto, un navegador con "modo oscuro forzado"
+   invierte la pagina solo y el resultado es peor que cualquiera de los dos. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+
+  /*
+    NUNCA bajar de .98.
+
+    Todo el contenido es en espanol. La A y la O con tilde en mayuscula suben por
+    encima de la altura normal, y con interlineado menor a 1 la tilde de la
+    segunda linea choca con la de arriba o la recorta el contenedor.
+    Prueba obligatoria antes de dar un titulo por bueno:
+        MAS DE VEINTE ANOS EN DESAMPARADOS
+  */
+  line-height: 0.98;
+  padding-block-start: 0.08em;
+}
+
+/* El foco de teclado. Sin esto el sitio es inusable con Tab, que es como lo
+   recorre quien no puede usar mouse. :focus-visible y no :focus, para que el
+   anillo no aparezca en cada clic. */
+:focus-visible {
+  outline: 2px solid var(--color-tomate-hondo);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+/* Los sitios de comida que se ven caros son los de columna angosta. */
+.medida {
+  max-width: 62ch;
+}
+
+/* Entrada unica por bloque, no en cascada elemento por elemento: el stagger sin
+   tope es lo que hace que en tech-services los productos de abajo tarden
+   segundos en aparecer. */
+@keyframes entra {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entra {
+  animation: entra 400ms var(--ease-suave) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+  La carta se imprime y se pega en la pared. De los cuatro sitios del grupo, este
+  es el unico que alguien va a imprimir de verdad.
+*/
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  a[href^="http"]::after {
+    content: "";
+  }
+
+  h2 {
+    break-after: avoid;
+  }
+
+  .plato {
+    break-inside: avoid;
+  }
+}

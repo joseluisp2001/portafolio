@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+/*
+  Estetica: CATALOGO DENSO.
+  La anti-landing. El buscador ocupa el lugar donde los otros ponen la foto
+  grande. Cero animacion, cero decoracion, filas de 56 px.
+  Se mide por una sola cosa: cuantos segundos tarda alguien en encontrar un
+  tornillo de 3/8.
+*/
+
+@theme {
+  /* --- Color: senala estado, no decora -----------------------------------
+     Contrastes medidos:
+       texto / fondo ....... 15,3:1  ✓
+       apagado / fondo ...... 5,2:1  ✓
+       azul / fondo ......... 4,7:1  ✓ (justo)
+       error / fondo ........ 5,5:1  ✓
+       texto / naranja ...... 5,8:1  ✓
+       naranja / fondo ...... 2,6:1  ✗  SOLO RELLENO, NUNCA LETRA          */
+  --color-fondo: #f4f5f7;
+  --color-fila: #ffffff;
+  --color-texto: #1c1e21;
+  --color-apagado: #5f6773;
+  --color-azul: #0b5fff;
+  --color-naranja: #ff6a00;
+  --color-error: #c0231a;
+  --color-linea: #e3e5e9;
+  --color-hover: #edeff3;
+  --color-elegido: #eef3ff;
+
+  /* --- Tipografia: una familia, sin display.
+         La jerarquia la dan el peso y el fondo, no el tamano. --- */
+  --font-cuerpo: var(--fuente-cuerpo), system-ui, -apple-system, sans-serif;
+
+  --text-h1: 1.75rem;
+  --text-h2: 1.125rem;
+  --text-base: 0.84375rem; /* 13,5 px */
+  --text-campo: 1rem; /* 16 px — obligatorio, ver abajo */
+
+  /* --- Forma: densa --- */
+  --radius-base: 4px;
+  --shadow-unica: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+  LOS CAMPOS VAN A 16 px, SIN EXCEPCION.
+
+  Safari en iPhone hace zoom automatico en cualquier input con letra menor a
+  16 px al tocarlo, y deja la pagina descuadrada. En un sitio cuyo elemento
+  principal es un buscador, eso arruina la experiencia entera justo en el
+  dispositivo por el que entra la mayoria.
+
+  El cuerpo puede ir a 13,5 px. Los campos no.
+*/
+input,
+select,
+textarea {
+  font-size: var(--text-campo);
+}
+
+.precio,
+.codigo {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  El foco usa OUTLINE, nunca BORDER.
+
+  `outline` se dibuja fuera del flujo y no ocupa espacio; `border` si. Un borde
+  de foco de 2 px en una fila de 56 px recalcula el alto y empuja todas las
+  filas de abajo cada vez que se tabula: en una lista de 300 resultados, la
+  pagina parece temblar.
+*/
+:focus-visible {
+  outline: 2px solid var(--color-azul);
+  outline-offset: 1px;
+}
+
+/*
+  Filas de 56 px. En pantalla tactil suben a 60: el minimo de un blanco tocable
+  es 44x44 (Apple) / 48 dp (Android), y el boton de agregar vive adentro de la
+  fila. Se pierde un resultado por pantalla y se gana que el boton funcione.
+*/
+.fila {
+  min-height: 56px;
+}
+
+@media (pointer: coarse) {
+  .fila {
+    min-height: 60px;
+  }
+}
+
+/*
+  Esqueleto de carga, no spinner ni fade.
+
+  El esqueleto ocupa el tamano exacto de la fila, asi que cuando llega el
+  contenido nada salta. En listas largas el salto es el defecto que mas molesta.
+*/
+@keyframes latido {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.esqueleto {
+  animation: latido 1.2s ease-in-out infinite;
+  background: var(--color-linea);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

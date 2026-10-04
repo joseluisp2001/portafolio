@@ -1,0 +1,590 @@
+@import "tailwindcss";
+
+/*
+  Estetica: DOCUMENTO, print-first.
+
+  Es lo que la separa de los otros seis proyectos: ninguno esta disenado para
+  imprimirse. Aca se disena LA HOJA y la pantalla la muestra.
+
+  La prueba: imprimir a PDF y abrirlo. Si hay que tocar algo —margenes, un bloque
+  cortado a la mitad, un enlace que quedo como (url)— no esta terminado.
+*/
+
+@theme {
+  /* Contrastes: tinta/papel 17,4:1 · gris/papel 6,4:1 · acento/papel 7,1:1 */
+  --color-papel: #ffffff;
+  --color-mesa: #ededea; /* solo en pantalla */
+  --color-tinta: #1a1a18;
+  --color-gris: #5e5e58;
+  --color-regla: #d6d6d1;
+  --color-acento: #7a4b1e; /* marron de tinta, no azul de web */
+
+  --font-titulo: var(--fuente-titulo), Georgia, serif;
+  --font-cuerpo: var(--fuente-cuerpo), system-ui, sans-serif;
+
+  --text-nombre: 2.25rem;
+  /* 14 px: la mayuscula espaciada ya se ve un 30 % mas grande que la
+     minuscula. A 16 px los rotulos pesaban mas que los nombres de proyecto y
+     de puesto, que es lo que de verdad se busca. */
+  --text-seccion: 0.875rem;
+  --text-puesto: 1.0625rem;
+  --text-base: 0.9375rem; /* 15 px: tamano de documento */
+
+  /*
+    Movimiento. Las curvas que trae el navegador son demasiado blandas: un
+    ease-out de fabrica tarda en arrancar justo cuando uno esta mirando.
+    Pisar --ease-out cambia tambien la clase `ease-out` de Tailwind en todo el
+    sitio, que es lo que se quiere: una sola curva de salida, no dos.
+  */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* entradas de interfaz */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1); /* algo que se mueve dentro de la pantalla */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1); /* titulos y la hoja */
+}
+
+:root {
+  color-scheme: light;
+}
+
+/*
+  ---------------------------------------------------------------------------
+  LAS LETRAS
+
+  Lo que separa un documento compuesto de uno escrito: no es la fuente, son los
+  ajustes que casi nadie toca.
+
+  Las reglas de ELEMENTO (body, h1-h3, p) van en `@layer base`. Fuera de capa le
+  ganaban a las clases de Tailwind, que viven en `@layer utilities`: los h3
+  pedian `font-cuerpo` y salian en Newsreader, y ningun `leading-*` o
+  `text-balance` sobre un titulo hacia nada. Ahora la clase dice lo que pasa.
+  (Las clases propias —.nombre, .seccion, .fecha, .prosa— siguen fuera de capa
+  a proposito: son el sistema del documento y no se pisan con una utilidad.)
+  ---------------------------------------------------------------------------
+*/
+@layer base {
+  body {
+    background: var(--color-mesa);
+    color: var(--color-tinta);
+    font-family: var(--font-cuerpo);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+
+    /* Ligaduras y kerning encendidos a mano. El navegador aplica los mas
+       basicos, pero no las ligaduras contextuales ni el kerning en tamanos
+       chicos. */
+    font-kerning: normal;
+    font-feature-settings: "kern" 1, "liga" 1, "clig" 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-titulo);
+    line-height: 1.15;
+    /* Reparte las palabras entre las lineas en vez de dejar una sola
+       colgando. Es la diferencia entre un titulo compuesto y uno que cayo
+       donde cayo. */
+    text-wrap: balance;
+  }
+
+  p {
+    /* Evita la palabra huerfana al final del parrafo. */
+    text-wrap: pretty;
+  }
+}
+
+/*
+  El nombre: tamano optico alto, tracking negativo y las mayusculas alineadas.
+
+  A 2,5rem la Newsreader necesita apretarse; a tamano de texto necesita lo
+  contrario. Por eso la fuente se carga con el eje `opsz`, que ajusta el grosor
+  del trazo segun el tamano — es exactamente para lo que existe.
+*/
+.nombre {
+  font-family: var(--font-titulo);
+  font-size: var(--text-nombre);
+  font-weight: 600;
+  letter-spacing: -0.021em;
+  line-height: 1.05;
+}
+
+/*
+  Las fechas: revestidas y tabulares, para que las columnas de anos queden
+  alineadas al milimetro una debajo de la otra. SOLO en fechas: en Inter
+  `tabular-nums` tambien ensancha el guion, y en el renglon de contacto el
+  correo se leia "jose - luis - prado".
+
+  (Aca habia `oldstyle-nums` para el texto corrido. Inter no trae cifras de
+  estilo antiguo, asi que no hacia nada: se saco el 21-9-2026.)
+*/
+.fecha,
+.tabular {
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Las comillas y los guiones del texto en espanol, con el espacio correcto. */
+.prosa {
+  hanging-punctuation: first last;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
+}
+
+/* La hoja. En pantalla flota sobre la mesa; al imprimir, ES la pagina. */
+.hoja {
+  background: var(--color-papel);
+  max-width: 46rem;
+  margin-inline: auto;
+}
+
+@media screen {
+  .hoja {
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 12px 32px rgb(0 0 0 / 0.08);
+    /* Una hoja apoyada en la mesa deja mesa abajo. Sin esto terminaba a ras
+       del borde de la pagina y se leia como cortada, no como una hoja. */
+    margin-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+}
+
+/* Rotulo de seccion: mayuscula espaciada con una regla debajo. La jerarquia la
+   dan la regla y el espacio, no el color ni una tarjeta. */
+.seccion {
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-seccion);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-regla);
+  padding-bottom: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+/*
+  ---------------------------------------------------------------------------
+  EL MOVIMIENTO
+
+  Tres reglas lo ordenan:
+
+  1. TODO LO QUE ESCONDE ESTA DENTRO DE `@media screen` Y DE `html[data-mov]`.
+     En papel estas reglas no existen, asi que la hoja impresa no puede quedar
+     con un bloque a medio aparecer aunque nadie haya hecho scroll. Y sin
+     JavaScript nadie pone `data-mov`: la pagina se ve entera, quieta.
+
+  2. `data-mov` lo pone un script en <head>, antes de pintar, y solo si la
+     persona no pidio "reducir movimiento". Si el JS de la pagina no arranca en
+     3 s, el mismo script la quita y todo aparece.
+
+  3. Una vez. Lo que aparece al hacer scroll no se repite al volver a pasar:
+     una pagina que se vuelve a animar cada vez que uno sube pelea con quien la
+     lee.
+  ---------------------------------------------------------------------------
+*/
+
+/* Entrada de la pantalla de exito de la demostracion, del encabezado y del
+   boton de PDF. */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* La hoja se posa sobre la mesa. */
+@keyframes posar {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* Una palabra sube desde atras de su mascara. Baja su alto MAS 0.45em: la
+   mascara tiene 0.16em de relleno abajo, y con un 105 % pelado asomaba una
+   tira con la parte de arriba de las letras y alguna tilde suelta. */
+@keyframes asomar {
+  from {
+    transform: translateY(calc(100% + 0.45em));
+  }
+}
+
+/* El pie del pase de imagenes, al cambiar de lamina. */
+@keyframes subir-pie {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+/* La barra de la lamina activa: se llena en lo que falta para la siguiente.
+   Lineal, porque es un indicador de tiempo y el tiempo no acelera. */
+@keyframes llenar {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media screen {
+  /*
+    Las palabras de los titulos, cada una en su mascara. Van en linea-bloque
+    SOLO con movimiento y en pantalla: la busqueda del navegador (Ctrl+F) no
+    cruza de un bloque en linea a otro, y en papel, sin JS o con "reducir
+    movimiento" el nombre y los titulos se buscan y se imprimen como texto
+    corrido, igual que antes. Con movimiento, Ctrl+F encuentra cada palabra
+    pero no la frase entera: es el precio de que suban de a una.
+  */
+  html[data-mov] .mascara,
+  html[data-mov] .palabra {
+    display: inline-block;
+  }
+
+  /*
+    La mascara lleva holgura arriba y abajo (y la devuelve con margen
+    negativo): sin ella, overflow:hidden corta la tilde de GUTIÉRREZ, la de
+    "SÉ" en mayuscula y la cola de la g. Es el error de la Auditoria de diseno,
+    punto 5, que vuelve por otra puerta.
+  */
+  html[data-mov] .mascara {
+    overflow: hidden;
+    padding: 0.2em 0.06em 0.16em;
+    margin: -0.2em -0.06em -0.16em;
+    vertical-align: bottom;
+  }
+
+  /* --- A. La entrada, una vez, al cargar. Solo CSS: corre aunque el JS
+         todavia no haya llegado. ---------------------------------------- */
+  html[data-mov] .hoja {
+    animation: posar 700ms var(--ease-expo) backwards;
+  }
+
+  html[data-mov] .nombre .palabra {
+    animation: asomar 750ms var(--ease-expo) backwards;
+    animation-delay: calc(150ms + var(--i) * 60ms);
+  }
+
+  html[data-mov] .entrada {
+    animation: aparecer 600ms var(--ease-out) backwards;
+    animation-delay: var(--entrada, 0ms);
+  }
+
+  /* --- B. Los titulos de seccion: las palabras suben detras de su mascara
+         y la regla se dibuja de izquierda a derecha. ------------------- */
+  .seccion {
+    position: relative;
+  }
+
+  /* La regla de verdad sigue siendo el border-bottom: en papel un fondo de
+     1 px no se imprime si "graficos de fondo" esta apagado. En pantalla, con
+     movimiento, el borde se vuelve transparente y lo dibuja este ::after. */
+  html[data-mov] .seccion {
+    border-bottom-color: transparent;
+  }
+
+  html[data-mov] .seccion::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 1px;
+    background: var(--color-regla);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 900ms var(--ease-expo);
+    transition-delay: calc(var(--retardo, 0ms) + 120ms);
+  }
+
+  html[data-mov] .seccion .palabra {
+    transform: translateY(calc(100% + 0.45em));
+    transition: transform 700ms var(--ease-expo);
+    transition-delay: calc(var(--retardo, 0ms) + var(--i) * 60ms);
+  }
+
+  html[data-mov] .seccion[data-visto]::after,
+  html[data-mov] .seccion[data-visto] .palabra {
+    transform: none;
+  }
+
+  /* --- C. Los bloques: aparecen al entrar en pantalla, escalonados dentro
+         del grupo que entra junto. ------------------------------------ */
+  html[data-mov] [data-revelar="bloque"] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 600ms var(--ease-out),
+      transform 600ms var(--ease-out);
+    transition-delay: var(--retardo, 0ms);
+  }
+
+  html[data-mov] [data-revelar="bloque"][data-visto] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* --- D. La galeria entra con una cortina de abajo hacia arriba, y la
+         lamina se asienta mientras tanto. Curva de salida y no in-out: una
+         in-out tarda en arrancar y la galeria quedaba casi 300 ms como un
+         hueco blanco justo donde se estaba mirando. --------------------- */
+  /* El recorte va en .cortina, adentro, y no en el marco: Chrome no le avisa
+     al IntersectionObserver que entro en pantalla un elemento recortado
+     entero, y la cortina no se abria nunca. */
+  html[data-mov] [data-revelar="cortina"] .cortina {
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 800ms var(--ease-out);
+    transition-delay: var(--retardo, 0ms);
+  }
+
+  html[data-mov] [data-revelar="cortina"] .asentar {
+    transform: scale(1.06);
+    transition: transform 1400ms var(--ease-expo);
+    transition-delay: var(--retardo, 0ms);
+  }
+
+  html[data-mov] [data-revelar="cortina"][data-visto] .cortina {
+    clip-path: inset(0);
+  }
+
+  html[data-mov] [data-revelar="cortina"][data-visto] .asentar {
+    transform: none;
+  }
+
+  /* --- E. Los enlaces: un subrayado que se dibuja de izquierda a derecha.
+         Es una raya de 1 px que se escala, no un fondo que cambia de
+         tamano: solo transform. Y solo con mouse: en un telefono el hover
+         se dispara al tocar y queda pegado. Todos los .subrayable son
+         elementos de un flex, asi que la raya mide lo que el enlace. ---- */
+  .subrayable {
+    position: relative;
+    /* Un subrayado fijo y tenue, ademas de la raya que se dibuja con el
+       mouse. Sin el, un enlace marron al lado de texto gris (1,13:1 de
+       luminancia) se distinguia SOLO por el color (WCAG 1.4.1), y en el
+       telefono, sin hover, nunca se veia que era un enlace. */
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  }
+
+  .subrayable::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 250ms var(--ease-out);
+  }
+
+  .subrayable:focus-visible::after {
+    transform: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .subrayable:hover::after {
+      transform: none;
+    }
+
+    /* Con el mouse encima manda la raya que se dibuja: el subrayado tenue se
+       apaga para que no queden dos. */
+    .subrayable:hover {
+      text-decoration-color: transparent;
+    }
+  }
+}
+
+/*
+  El pase de imagenes: FUNDIDO SIN BAJON.
+
+  La version anterior apagaba una lamina mientras prendia la otra, y a mitad del
+  cambio las dos estaban al 50 % y se veia el blanco de atras. Aca la nueva
+  aparece ENCIMA de la vieja, que se queda entera debajo hasta que la nueva
+  termina; recien ahi se apaga, de golpe, porque ya no se ve.
+
+  El fundido y el asentado de la que entra los lanza element.animate() en
+  PaseDeImagenes, para que arranque de 0 aunque ya estuviera opaca debajo.
+  Por eso aca la actual y la previa van SIN transicion: en la cascada una
+  transicion de CSS le gana a element.animate() y lo taparia.
+
+  La que se va a `.lamina` se apaga con 700 ms de retraso y no de inmediato:
+  si alguien pasa laminas rapido, la de abajo sigue tapando el fondo mientras
+  la de arriba termina de aparecer.
+*/
+.lamina {
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0s linear 700ms;
+}
+
+.lamina-previa,
+.lamina-actual {
+  opacity: 1;
+  transition: none;
+}
+
+.lamina-previa {
+  z-index: 1;
+}
+
+.lamina-actual {
+  z-index: 2;
+}
+
+.pie-entra {
+  animation: subir-pie 500ms var(--ease-expo) both;
+}
+
+.barra-progreso {
+  transform-origin: left center;
+  animation: llenar linear both;
+}
+
+/* Botones: se hunden al pulsarlos. Es la confirmacion de que la pagina oyo
+   el clic, y va en 160 ms porque mas lento ya se siente pegajoso. */
+.pulsable {
+  transition-property: transform, color, background-color, border-color, opacity;
+  transition-duration: 160ms, 200ms, 200ms, 200ms, 200ms;
+  transition-timing-function: var(--ease-out), ease, ease, ease, ease;
+}
+
+.pulsable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Habilidades: los renglones entran escalonados al abrir el grupo, y se van
+   todos juntos al cerrarlo. */
+.abrible li {
+  transition:
+    opacity 250ms var(--ease-out),
+    transform 250ms var(--ease-out);
+}
+
+.abrible[data-abierta="false"] li {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.abrible[data-abierta="true"] li {
+  transition-delay: calc(60ms + var(--i) * 35ms);
+}
+
+/*
+  "Reducir movimiento" no es "cero": se van los desplazamientos y las escalas,
+  y queda un fundido corto donde ayuda a entender que algo cambio.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .lamina {
+    transition: opacity 0s linear 200ms;
+  }
+
+  .pulsable:active:not(:disabled),
+  .abrible[data-abierta="false"] li {
+    transform: none;
+  }
+}
+
+/*
+  ---------------------------------------------------------------------------
+  IMPRESION. Esta es la parte que de verdad importa en este proyecto.
+  ---------------------------------------------------------------------------
+*/
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 15mm;
+  }
+
+  body {
+    background: #fff;
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  /* En papel nada se mueve. Sin esto, al pasar de pantalla a papel un
+     renglon de habilidades que estaba cerrado podria salir a mitad de su
+     transicion de apertura. */
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .hoja {
+    max-width: none;
+    box-shadow: none;
+    padding: 0 !important;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  /* El acento marron claro sale gris sucio en una impresora laser. En papel,
+     todo negro. */
+  .acento,
+  a {
+    color: #000 !important;
+  }
+
+  /* Un puesto de trabajo NUNCA se parte entre dos paginas. Es el defecto que
+     mas se ve en los curriculums que salen de una pagina web. */
+  .bloque {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .seccion {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  /*
+    LAS HABILIDADES SE ABREN TODAS AL IMPRIMIR.
+
+    En pantalla los grupos se abren de a uno; en papel eso seria un curriculum
+    con la mitad del contenido escondido detras de un clic que no existe.
+  */
+  .abrible {
+    grid-template-rows: 1fr !important;
+  }
+
+  .abrible ul,
+  .abrible li {
+    opacity: 1 !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  /* El boton del grupo vuelve a ser texto: sin borde y sin flecha. */
+  .imprimir-plano {
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Sin esto, cada enlace imprime su URL al lado y descuadra las lineas. El
+     correo y el telefono ya estan escritos como texto. */
+  a[href]::after {
+    content: "" !important;
+  }
+}

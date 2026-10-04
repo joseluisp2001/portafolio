@@ -1,0 +1,14 @@
+# pnpm v10+ lee la configuracion del proyecto desde este archivo, no desde package.json.
+
+# unrs-resolver trae un binario nativo que usa el resolver de imports de
+# eslint-config-next. Sin aprobar su build script, pnpm aborta con ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  unrs-resolver: true
+  sharp: true
+
+# eslint-config-next referencia sus plugins (react-hooks, jsx-a11y, import, @next)
+# por nombre. Con el node_modules estricto de pnpm no son alcanzables desde la
+# raiz del proyecto, asi que los elevamos explicitamente.
+publicHoistPattern:
+  - '*eslint*'
+  - '@next/eslint-plugin-next'

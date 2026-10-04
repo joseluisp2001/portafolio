@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+  Estetica: SUAVE ORGANICO.
+  Todo redondo y con aire. Nadie llega feliz a una veterinaria: el sitio tiene
+  que bajar el pulso, no subirlo. Nada grita, nada apura, nada es rojo.
+  El diseno completo esta en la nota de Obsidian "Veterinaria — suave".
+*/
+
+@theme {
+  /* --- Color: EN PARES ---------------------------------------------------
+     La trampa clasica de las paletas pastel es que el color que se eligio
+     porque se ve lindo en el bloque grande termina usado como color de boton, y
+     ahi deja de funcionar.
+
+       salvia / nube ......... 2,7:1   NO PASA ni para texto grande
+       salvia-texto / nube ... 5,8:1   ✓
+       cielo-texto / nube .... 6,1:1   ✓
+       tinta / nube .......... 11,6:1  ✓
+       alerta / nube ......... 4,8:1   ✓
+
+     Un boton "Agendar" en salvia con texto blanco es ILEGIBLE con sol de
+     mediodia en un celular, que es exactamente la condicion en que alguien
+     busca una veterinaria de urgencia.
+
+     Por eso: el color decorativo y el color de texto NUNCA son el mismo hex. */
+  --color-nube: #fdfcfa;
+  /*
+    Las tarjetas necesitan superficie PROPIA.
+
+    Estaban en --nube, o sea exactamente el color del fondo, y lo unico que las
+    separaba era una sombra al 8%: en pantalla la seccion de servicios se veia
+    literalmente en blanco. Lo vi al bajar en el navegador; en el papel el diseno
+    decia "pastilla blanca sobre nube" y sonaba bien.
+
+    En una estetica sin bordes ni lineas, el unico separador es el color de
+    fondo. Si dos superficies apiladas tienen el mismo, no hay diseno: hay nada.
+  */
+  --color-tarjeta: #ffffff;
+  --color-arena: #e8dcc8;
+  --color-salvia: #7fa383; /* DECORATIVO: blobs, franjas, ilustracion */
+  --color-salvia-texto: #4f6b54; /* TEXTO y botones */
+  --color-cielo: #8fb8c9; /* DECORATIVO */
+  --color-cielo-texto: #3e6577; /* enlaces y anillo de foco */
+  --color-tinta: #2e3a32; /* verde muy oscuro, NUNCA #000 */
+  --color-alerta: #a85b4b; /* terracota apagada. No es rojo, a proposito */
+
+  /* --- Tipografia: una sola familia --- */
+  --font-cuerpo: var(--fuente-cuerpo), system-ui, sans-serif;
+
+  --text-h1: 2.75rem;
+  --text-h2: 1.875rem;
+  --text-base: 1.0625rem;
+
+  /* --- Forma --- */
+  --radius-base: 24px;
+  --radius-dato: 8px;
+
+  --shadow-blanda: 0 8px 32px rgb(46 58 50 / 0.08);
+  --shadow-alta: 0 12px 40px rgb(46 58 50 / 0.12);
+
+  /* --- Movimiento: lento --- */
+  --ease-blando: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Los pasteles invertidos quedan sucios. Sin esto, un navegador con "modo
+   oscuro forzado" invierte la pagina solo y queda peor que de los dos lados. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-nube);
+  color: var(--color-tinta);
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-base);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* El anillo sigue el radio de la pastilla. Cielo y no salvia: la salvia no
+   llega ni al minimo de 3:1 que pide un indicador de foco. */
+:focus-visible {
+  outline: 3px solid var(--color-cielo-texto);
+  outline-offset: 3px;
+}
+
+/*
+  LA EXCEPCION QUE SOSTIENE LA ESTETICA.
+
+  Redondo + pastel + blobs, llevado a TODO, deja de leerse "clinica" y empieza a
+  leerse "guarderia". Y una veterinaria tambien tiene que verse competente: ahi
+  adentro operan.
+
+  Entonces: la carcasa es blanda, pero el dato es estricto. Precios, horarios y
+  esquemas de vacunacion van en tabla, alineados a la izquierda, con numeros
+  tabulares, radio chico y sin sombra. Ese contraste es lo que produce
+  confianza, y es lo mas dificil de copiar de las cuatro esteticas.
+*/
+.tabla-dato {
+  border-radius: var(--radius-dato);
+  box-shadow: none;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.tabla-dato th,
+.tabla-dato td {
+  padding: 0.75rem 1rem;
+}
+
+.tabla-dato tbody tr + tr {
+  border-top: 1px solid rgb(46 58 50 / 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

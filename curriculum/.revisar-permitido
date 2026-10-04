@@ -1,0 +1,15 @@
+# Datos que en ESTE proyecto van publicos a proposito.
+#
+# Un curriculum sin correo ni telefono no sirve para nada: publicarlos es
+# literalmente para lo que existe. Lo que sigue es una decision, no un descuido,
+# y por eso esta escrita en un archivo del repo y no escondida en un flag.
+#
+# Regla: si algo se agrega aca, se agrega sabiendo que va a quedar publico para
+# siempre. Ante la duda, no se agrega.
+
+jose-luis-prado@hotmail.com
+50672696251
+
+# El correo de aurastudio aparece como EJEMPLO dentro de un comentario de
+# scripts/revisar-publico.mjs, explicando que patron si detecta.
+hola@aurastudio.com

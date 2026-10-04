@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/*
+  Estetica: BRUTALISTA OSCURO.
+  Estructura a la vista y cero decoracion. Todo es rejilla, borde y mayuscula.
+  El diseno completo esta en la nota de Obsidian "Barberia — brutalista".
+*/
+
+@theme {
+  /* --- Color: tres, y no hay un cuarto -----------------------------------
+     Contrastes medidos:
+       hueso / negro ....... 17,4:1   (demasiado para parrafos, ver abajo)
+       ambar / negro ....... 11,0:1
+       negro / ambar ....... 11,0:1   (la inversion)
+       gris  / negro ........ 5,7:1                                        */
+  --color-negro: #0a0a0a;
+  --color-hueso: #f2f0eb;
+  --color-ambar: #ffb300;
+  --color-borde: #2a2a2a;
+  --color-gris: #8a8a85;
+
+  /* 17,4:1 de hueso puro sobre negro produce HALACION: para quien tiene
+     astigmatismo las letras irradian, y en monoespaciada de 14 px un parrafo
+     largo se vuelve cansado. Los titulos y las cifras si van a full contraste,
+     que es donde el efecto suma. */
+  --color-hueso-largo: #e8e6e1;
+
+  /* --- Tipografia --- */
+  --font-titulo: var(--fuente-titulo), "Arial Black", sans-serif;
+  --font-cuerpo: var(--fuente-cuerpo), ui-monospace, "Courier New", monospace;
+
+  --text-h1: clamp(3rem, 9vw, 7rem);
+  --text-h2: clamp(1.5rem, 4vw, 2.5rem);
+  --text-base: 0.875rem;
+
+  /* --- Forma: cero, en todo --- */
+  --radius-base: 0px;
+
+  /* --- Movimiento: seco --- */
+  --ease-seco: linear;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-negro);
+  color: var(--color-hueso);
+  font-family: var(--font-cuerpo);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-titulo);
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+
+  /*
+    NUNCA bajar de .98.
+
+    Mayusculas + tildes + Archivo Black + 7rem es la combinacion exacta en que
+    la tilde de la segunda linea se corta. No es un riesgo: pasa siempre.
+    Prueba obligatoria:  MAS DE VEINTE ANOS EN DESAMPARADOS
+  */
+  line-height: 0.98;
+  padding-block-start: 0.08em;
+}
+
+p {
+  color: var(--color-hueso-largo);
+  max-width: 60ch;
+}
+
+/*
+  El anillo de foco va POR DENTRO.
+
+  Con radio 0 y bordes de 1 px compartidos, un outline-offset positivo se monta
+  sobre la celda vecina y se lee como un error de maquetacion. Metido hacia
+  adentro, se lee como parte del sistema.
+*/
+:focus-visible {
+  outline: 3px solid var(--color-ambar);
+  outline-offset: -3px;
+}
+
+/* Sobre una celda ya invertida, el anillo pasa a negro: tambien 11:1. */
+.invertida:focus-visible {
+  outline-color: var(--color-negro);
+}
+
+/*
+  La rejilla: los bordes se comparten y las celdas SE TOCAN. Sin gutter. Es lo
+  que hace que se lea como una hoja de calculo y no como tarjetas.
+*/
+.rejilla {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--color-borde);
+}
+
+.rejilla > * {
+  border-right: 1px solid var(--color-borde);
+  border-bottom: 1px solid var(--color-borde);
+  margin-right: -1px;
+  margin-bottom: -1px;
+}
+
+/* La inversion es EL lenguaje de interaccion de esta estetica. De golpe, en
+   90 ms, sin suavizado: se siente mecanico y esa es la intencion. */
+.fila {
+  transition: background-color 90ms linear, color 90ms linear;
+}
+
+@media (hover: hover) {
+  .fila:hover {
+    background: var(--color-ambar);
+    color: var(--color-negro);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
